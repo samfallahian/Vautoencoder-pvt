@@ -1,0 +1,1 @@
+This folder includes everything that deos not belong in the other folders like helpers.

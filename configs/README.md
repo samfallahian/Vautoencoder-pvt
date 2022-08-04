@@ -1,0 +1,1 @@
+In this module, we define everything that can be configurable and can be changed in the future like hyperparameters, folder path, etc.
