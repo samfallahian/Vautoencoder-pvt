@@ -15,7 +15,6 @@ class Config:
         params = json.loads(json.dumps(cfg), object_hook=HelperObject)
         return cls(params.data, params.train, params.model)
 
-
 class HelperObject(object):
     """Helper class to convert json into Python object"""
     def __init__(self, dict_):
