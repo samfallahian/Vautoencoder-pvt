@@ -4,7 +4,7 @@ import os
 
 # internal
 from .base_model import BaseModel
-from dataloader.dataloader import DataLoader
+from dataloader.databuilder import DataLoader1
 
 # external
 import tensorflow as tf
@@ -35,7 +35,7 @@ class UNet(BaseModel):
 
     def load_data(self):
         """Loads and Preprocess data """
-        self.dataset, self.info = DataLoader().load_data(self.config.data)
+        self.dataset, self.info = DataLoader1().load_data(self.config.data)
         self._preprocess_data()
 
     def _preprocess_data(self):
