@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from torch import nn, optim
 from torch.autograd import Variable
 from model import autoencoder
+from datetime import datetime
 
 
 class Executor:
@@ -26,9 +27,9 @@ class Executor:
             train_loss += loss.item()
             self.optimizer.step()
         if epoch % 100 == 0:
-            print('====> Epoch: {} Average training loss: {:.4f}'.format(
-                epoch, train_loss / len(loader.dataset)))
-        return {"epoch": epoch, "loss": train_loss / len(loader.dataset)}
+            print('====> Epoch: {} Time: {} Average training loss: {:.4f}'.format(
+                epoch, datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), train_loss / len(loader.dataset)))
+        return {"epoch": epoch, "time": str(datetime.now()) , "loss": train_loss / len(loader.dataset)}
 
     def test(self, epoch, loader):
         with torch.no_grad():
@@ -39,8 +40,13 @@ class Executor:
                 recon_batch, mu, log_var = self.model(data)
                 loss = self.custom_loss(recon_batch, data, mu, log_var)
                 test_loss += loss.item()
-                if epoch % 100 == 0:
-                    print('====> Epoch: {} Average test loss: {:.4f}'.format(
-                        epoch, test_loss / len(loader.dataset)))
-        return {"epoch": epoch, "loss": test_loss / len(loader.dataset)}
+            if epoch % 100 == 0:
+                print('====> Epoch: {} Time: {} Average test loss: {:.4f}'.format(
+                        epoch, datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), test_loss / len(loader.dataset)))
+        return {"epoch": epoch, "time": str(datetime.now()) ,"loss": test_loss / len(loader.dataset)}
+
+    def save_model(self):
+        torch.save(self.model.state_dict(), "saved_models/"+f"{datetime.now()}-model.pth")
+
+
 
