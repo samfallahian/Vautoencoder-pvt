@@ -133,3 +133,4 @@ dmypy.json
 notebooks/.idea
 
 logs/*.json
+saved_models/*.pth
