@@ -24,8 +24,9 @@ class HelperObject(object):
 
 
 class Log:
-    def write_file(self, data, file_name):
-        with open(os.path.join("logs", f"{datetime.now()}-{file_name}.json"), "w") as f:
+    @staticmethod
+    def write_file(data, file_name, cfg):
+        with open(os.path.join("logs", f"{datetime.now()}-{file_name}-{cfg.data.folder}.json"), "w") as f:
             json.dump(data, f, indent=4)
 
     def append_file(self, data, file_name):
