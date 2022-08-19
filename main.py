@@ -13,7 +13,7 @@ def main():
 
     data_reader = DataReader(conf)
 
-    data = data_reader.load_and_standardize_data()
+    data = data_reader.load_and_standardize_data(random_split=False)
 
     train_data_set = DataBuilder(data=data, train=True)
     test_data_set = DataBuilder(data=data, train=False)
@@ -34,10 +34,12 @@ def main():
         test = exe.test(epoch, test_loader)
         test_losses.append(test)
 
+    exe.generator(test_loader)
     print(f"Finish training: {datetime.now()}")
 
-    logger.write_file(data=train_losses, file_name="train")
-    logger.write_file(data=test_losses, file_name="test")
+    logger.write_file(data=cfg.CFG, file_name="config", cfg=conf)
+    logger.write_file(data=train_losses, file_name="train", cfg=conf)
+    logger.write_file(data=test_losses, file_name="test", cfg=conf)
 
     print(f"Saving model: {datetime.now()}")
     exe.save_model()

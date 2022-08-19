@@ -133,4 +133,5 @@ dmypy.json
 notebooks/.idea
 
 logs/*.json
+logs/*.pth
 saved_models/*.pth
