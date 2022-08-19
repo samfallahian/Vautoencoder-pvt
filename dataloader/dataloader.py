@@ -9,5 +9,5 @@ class DataLoader:
         self.batch_size = batch_size
 
     def loader(self):
-        loader = Mapper(dataset=self.databuilder, batch_size=self.batch_size)
+        loader = Mapper(dataset=self.databuilder, batch_size=self.batch_size, shuffle=True)
         return loader
