@@ -5,7 +5,8 @@ CFG = {
         "folders": ["3p6", "4p4", "4p6", "5p2", "6p4", "6p6", "7p2", "7p8", "8p4", "10p4", "11p4"],
         "folder": "test",
         "start_frame": 1,
-        "end_frame": 51
+        "end_frame": 51,
+        "split_fraction": 3
     },
     "train": {
         "learning_rate": 1e-3,
