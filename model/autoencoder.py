@@ -4,9 +4,10 @@ import torch.nn.functional as F
 from torch import nn, optim
 from torch.autograd import Variable
 
+# https://debuggercafe.com/getting-started-with-variational-autoencoder-using-pytorch/
 
 class Autoencoder(nn.Module):
-    def __init__(self, D_in, H=50, H2=12, latent_dim=3):
+    def __init__(self, D_in, H=50, H2=12, latent_dim=3, dropout=0.1):
 
         # Encoder
         super(Autoencoder, self).__init__()
@@ -37,7 +38,11 @@ class Autoencoder(nn.Module):
         self.linear6 = nn.Linear(H, D_in)
         self.lin_bn6 = nn.BatchNorm1d(num_features=D_in)
 
+        # Activation Function
         self.relu = nn.ReLU()
+
+        # Dropout
+        self.dropout = nn.Dropout(dropout)
 
     def encode(self, x):
         lin1 = self.relu(self.lin_bn1(self.linear1(x)))
@@ -46,18 +51,30 @@ class Autoencoder(nn.Module):
 
         fc1 = F.relu(self.bn1(self.fc1(lin3)))
 
+        fc1 = self.dropout(fc1)
         r1 = self.fc21(fc1)
         r2 = self.fc22(fc1)
 
         return r1, r2
 
     def reparameterize(self, mu, log_var):
-        if self.training:
-            std = log_var.mul(0.5).exp_()
-            eps = Variable(std.data.new(std.size()).normal_())
-            return eps.mul(std).add_(mu)
-        else:
-            return mu
+        """
+        param mu: mean from the encoder's latent space
+        param log_var: log variance from the encoder's latent space
+        """
+        # if self.training:
+        #     std = log_var.mul(0.5).exp_()
+        #     eps = Variable(std.data.new(std.size()).normal_())
+        #     return eps.mul(std).add_(mu)
+        # else:
+        #     return mu
+        std = log_var.mul(0.5).exp_()
+        eps = Variable(std.data.new(std.size()).normal_())
+        return eps.mul(std).add_(mu)
+        # std = torch.exp(0.5*log_var) # standard deviation
+        # eps = torch.randn_like(std) # `randn_like` as we need the same size
+        # sample = mu + (eps * std) # sampling as if coming from the input space
+        # return sample
 
     def decode(self, z):
         fc3 = self.relu(self.fc_bn3(self.fc3(z)))
@@ -81,5 +98,6 @@ class CustomLoss(nn.Module):
     def forward(self, x_recon, x, mu, log_var):
         loss_MSE = self.mse_loss(x_recon, x)
         loss_KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
-
-        return loss_MSE + loss_KLD
+        final_loss = loss_MSE + loss_KLD
+        # TODO fix return variable
+        return final_loss
