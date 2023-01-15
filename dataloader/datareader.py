@@ -15,10 +15,10 @@ class DataReader:
         df = df[df["time"] <= self.cfg.data.end_frame]
         df = df.values.reshape(-1, df.shape[1])
         if random_split:
-            x_train, x_test = train_test_split(df, test_size=0.2, random_state=42)
+            x_train, x_test = train_test_split(df, test_size=self.cfg.data.test_size , random_state=42)
         else:
-            x_train = df[df[:, 6] % self.cfg.data.split_fraction != 0]
-            x_test = df[df[:, 6] % self.cfg.data.split_fraction == 0]
+            x_train = df[df[:, self.cfg.data.feature_no] % self.cfg.data.split_fraction != 0]
+            x_test = df[df[:, self.cfg.data.feature_no] % self.cfg.data.split_fraction == 0]
         print("train length: ", len(x_train))
         print("test length: ", len(x_test))
         scalar = preprocessing.StandardScaler()

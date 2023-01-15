@@ -4,11 +4,11 @@ import torch.nn.functional as F
 from torch import nn, optim
 from torch.autograd import Variable
 
+
 # https://debuggercafe.com/getting-started-with-variational-autoencoder-using-pytorch/
 
 class Autoencoder(nn.Module):
     def __init__(self, D_in, H=50, H2=12, latent_dim=3, dropout=0.1):
-
         # Encoder
         super(Autoencoder, self).__init__()
         self.linear1 = nn.Linear(D_in, H)
@@ -57,24 +57,17 @@ class Autoencoder(nn.Module):
 
         return r1, r2
 
-    def reparameterize(self, mu, log_var):
+    @staticmethod
+    def reparameterize(mu, log_var):
         """
         param mu: mean from the encoder's latent space
         param log_var: log variance from the encoder's latent space
         """
-        # if self.training:
-        #     std = log_var.mul(0.5).exp_()
-        #     eps = Variable(std.data.new(std.size()).normal_())
-        #     return eps.mul(std).add_(mu)
-        # else:
-        #     return mu
         std = log_var.mul(0.5).exp_()
         eps = Variable(std.data.new(std.size()).normal_())
-        return eps.mul(std).add_(mu)
-        # std = torch.exp(0.5*log_var) # standard deviation
         # eps = torch.randn_like(std) # `randn_like` as we need the same size
-        # sample = mu + (eps * std) # sampling as if coming from the input space
-        # return sample
+        sample = eps.mul(std).add_(mu)
+        return sample
 
     def decode(self, z):
         fc3 = self.relu(self.fc_bn3(self.fc3(z)))

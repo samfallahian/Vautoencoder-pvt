@@ -49,23 +49,30 @@ class Executor:
                     epoch, datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), test_loss / len(loader.dataset)))
         return {"epoch": epoch, "time": str(datetime.now()), "loss": test_loss / len(loader.dataset)}
 
-    def save_model(self):
-        torch.save(self.model.state_dict(), "saved_models/" + f"{datetime.now()}-model.pth")
+    def save_model(self, file_name):
+        # Saving Model Weights
+        torch.save(self.model.state_dict(), "saved_models/" + f"{datetime.now()}-model_state-{file_name}.pth")
+        # Saving Models with Shapes
+        torch.save(self.model, "saved_models/" + f"{datetime.now()}-model-{file_name}.pth")
+
+    def load_model(self, file_name):
+        load_model = self.model
+        load_model.load_state_dict(torch.load("saved_models/" + f"{file_name}.pth"))
+        print(load_model.eval())
 
     def reconstructor(self, loader):
+        scaler = loader.dataset.standardizer
+        df_data = []
         with torch.no_grad():
             for batch_idx, data in enumerate(loader):
                 data = data.to(self.device)
                 self.optimizer.zero_grad()
                 recon_batch, mu, logvar = self.model(data)
-
-        scaler = loader.dataset.standardizer
-        recon_row = scaler.inverse_transform(recon_batch[0].cpu().numpy().reshape(1, -1))
-        real_row = scaler.inverse_transform(loader.dataset.x[0].cpu().numpy().reshape(1, -1))
-        # print("recon_row", recon_row)
-        # print("real_row", real_row)
-        # df = pd.DataFrame(np.stack((recon_row, real_row)), columns=["x","y","z","vx","vy","vz"])
-        # print(df)
+                recon_row = scaler.inverse_transform(recon_batch[0].cpu().numpy().reshape(1, -1))
+                real_row = scaler.inverse_transform(loader.dataset.x[0].cpu().numpy().reshape(1, -1))
+                df_data.append(real_row)
+                df_data.append(recon_row)
+        return df_data
 
     def generator(self, loader):
         with torch.no_grad():
@@ -74,16 +81,37 @@ class Executor:
                 self.optimizer.zero_grad()
                 recon_batch, mu, logvar = self.model(data)
         sigma = torch.exp(logvar / 2)
-        no_samples = 20
+        no_samples = 5000
         q = torch.distributions.Normal(mu.mean(axis=0), sigma.mean(axis=0))
         z = q.rsample(sample_shape=torch.Size([no_samples]))
-        print(z.shape)
-        print(z[:5])
         with torch.no_grad():
             pred = self.model.decode(z).cpu().numpy()
         scaler = loader.dataset.standardizer
         fake_data = scaler.inverse_transform(pred)
-        df_fake = pd.DataFrame(fake_data, columns=["x","y","z","vx","vy","vz","time"])
-        df_fake['time'] = np.round(df_fake['time']).astype(int)
-        df_fake['time'] = np.where(df_fake['time'] < 1, 1, df_fake['time'])
-        print(df_fake.head(10))
+        df_fake = self.create_data_frame(fake_data)
+        print('====> Generated data:')
+        print(df_fake.head())
+        return df_fake
+
+    @staticmethod
+    def create_data_frame(arr):
+        # df = pd.DataFrame(arr, columns=["x", "y", "z", "vx", "vy", "vz", "time"])
+        # df = pd.DataFrame(arr, columns=["vx", "vy", "vz", "time","loc_point"])
+        # df = pd.DataFrame(arr, columns=["x", "y", "z", "vx", "vy", "vz", "time", "distance"])
+        try:
+            df = pd.DataFrame(arr,
+                              columns=["vx", "vy", "vz", "time","transformed_x", "transformed_y", "transformed_z", "distance"])
+            df['time'] = np.round(df['time']).astype(int)
+            df['time'] = np.where(df['time'] < 1, 1, df['time'])
+            df['transformed_x'] = np.round(df['transformed_x']).astype(int)
+            df['transformed_y'] = np.round(df['transformed_y']).astype(int)
+            df['transformed_z'] = np.round(df['transformed_z']).astype(int)
+            df['distance'] = np.round(df['distance']).astype(int)
+            df.to_csv("logs/" + f"{datetime.now()}-generated-data.csv", index=False)
+            return df
+        except:
+            print("An exception occurred")
+            return pd.DataFrame([1,1,1,1,1,1,1],
+                              columns=["vx", "vy", "vz", "transformed_x", "transformed_y", "transformed_z", "distance"])
+
+

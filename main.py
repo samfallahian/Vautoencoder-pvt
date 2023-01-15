@@ -1,3 +1,5 @@
+import pandas as pd
+
 from configs import config as cfg
 from utils.config import Config, Log
 from dataloader.databuilder import DataBuilder
@@ -13,7 +15,7 @@ def main():
 
     data_reader = DataReader(conf)
 
-    data = data_reader.load_and_standardize_data(random_split=False)
+    data = data_reader.load_and_standardize_data(random_split=True)
 
     train_data_set = DataBuilder(data=data, train=True)
     test_data_set = DataBuilder(data=data, train=False)
@@ -27,14 +29,17 @@ def main():
     exe = Executor(cfg=conf.train, input_feature=input_feature)
     train_losses = []
     test_losses = []
+    # recon_values= []
 
     for epoch in range(1, conf.train.epochs + 1):
         train = exe.train(epoch, train_loader)
         train_losses.append(train)
         test = exe.test(epoch, test_loader)
         test_losses.append(test)
+        # Comparing real data with reconstructed data
+        # recon = exe.reconstructor(test_loader)
+        # recon_values.append(recon)
 
-    exe.generator(test_loader)
     print(f"Finish training: {datetime.now()}")
 
     logger.write_file(data=cfg.CFG, file_name="config", cfg=conf)
@@ -42,7 +47,10 @@ def main():
     logger.write_file(data=test_losses, file_name="test", cfg=conf)
 
     print(f"Saving model: {datetime.now()}")
-    exe.save_model()
+    exe.save_model(file_name=conf.data.folder)
+
+    # Generate new data
+    new_data = exe.generator(test_loader)
 
 
 if __name__ == "__main__":
